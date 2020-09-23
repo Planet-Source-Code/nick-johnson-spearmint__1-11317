@@ -1,0 +1,310 @@
+		Specifications for Spearmint compatiable instant messenger programmes.
+					Copyright 2000, Nick Johnson
+						09 August 2000
+
+Contents
+1	Message format
+1.0		Delivery
+1.1		General Format
+1.2		Details
+2	Message types
+2.0		Message type overview
+2.1		Type 'M' messages
+2.2		Type 'P' messages
+2.3		Type 'C' messages
+2.4		Type 'K' messages
+2.5		Type 'X' messages
+2.6		Additional message types
+3	Security
+3.0		Password security
+3.1		General security
+3.2		Forging and authentication
+4	Additional features
+4.0		User Interface features
+4.0.1			Online/Offline display of users
+4.0.2			Ignoring users and notification
+4.0.3			Online, Away, and Quiet modes
+4.0.4			Online and Idle times
+4.0.5			Transmission to Users, not computers
+4.1		Offline message features
+4.2		Alternative message transports
+5	Contact details
+
+1) Message format
+
+1.0) Delivery
+Messages to and from Spearmint compatiable clients are sent via Windows Mailslots. A Spearmint
+compatiable client must at least establish and listen on the mailslot "\\.\mailslot\messengr" on
+the local machine, although it may also choose to establish others. Messages to be sent to remote
+clients are simply "posted" to the \\<computername\mailslot\messengr mailslot on the remote
+machine, for collection by another Spearmint or Winpopup compatiable client. Currently, there is
+no way to determine if a mailslot exists on a remote machine, so delivery is not assured. One
+method may be to send a Ping message to the client before the message is sent, and wait for a
+reply. If no reply is recieved, the recepient is not running a Spearmint compatiable client. This
+approach has two major problems:
+-It will not identify people running Winpopup compatiable clients
+-People running Winpopup compatiable clients will recieve an empty message.
+While Mailslots are the main method of delivery for Spearmint compatiable clients, delivery may
+be attempted by any other secondary means, so long as it does not interfere with Spearmint
+compatiability.
+
+1.1) General format:
+Messages are sent containing a number of "fields". Fields are as outlined below:
+
+To Username
+<NULL>
+From Username
+<NULL>
+Message Text
+<NULL>
+From Computer
+<NULL>
+Message Type (1 character)
+Additional Data
+
+Where <NULL> represents the character with the ASCII code 0. Note that there is no <NULL> between
+the Message Type and additional data fields, as Message Type is always 1 character long.
+Note that <NULL> is not counted as a field!
+Also, the From computer MUST be the actual computer from which the message was sent, while the
+From field need not be a valid target for a message. When replying to or sending a message,
+Spearmint uses the format user@computer.
+
+1.2) Details
+The first three fields are 100% compatiable with Winpopup style messages. If a Spearmint
+compatiable messenger recieves a message with at least the first 3 fields, the message should
+be treated as complete. Missing fields should be assumed to have values as follows:
+
+Missing Field		Default Value
+-------------------------------------
+From Computer		The value of the From Username field
+Message Type		"M"
+Additional Data		Empty
+
+If a message is recieved by a Spearmint compatiable messenger with a type that is not recognised,
+the message should be ignored. All Spearmint compatiable messengers must support at least message
+types 'M' and 'P'. Additional types may be added, types with upper-case letter identifiers are
+reserved for the Spearmint specification, all others may be proprietary, although it is
+reccommended that data should be included in the Additional Data field to positively identify the
+message type from messages with identical identifiers sent by other clones.
+
+If a message of type 'M' or 'P' is recieved by a Spearmint compatiable messenger that has
+unrecognised or unexpected data in the Additional Data field, the message should be treated as per
+normal.
+
+2) Message types
+
+2.0) Message Types Overview
+
+Type Identifier		Message Type			Contents of Additional Data field
+-----------------------------------------------------------------------------------------
+	M		Standard text message		Empty or "Confirm"
+	P		Ping request			Empty
+	C		CC request			Administration password
+	K		Kill request			Administration password
+	X		Kill & Do not allow reload	Administration password
+
+Support of all message types except 'M' and 'P' messages is optional.
+
+
+2.1) Type 'M' messages
+Type 'M' messages are the main type employed by Spearmint and compatiable programmes. Type 'M'
+messages contain text data to be viewed by the recepient in a standard message box. When a type
+'M' message is recieved, the programme may treat it as desired, but standard practice would be
+to either display it immediately, or place it in a queue for later retrieval and reading. If a
+message is recieved with less than 5 fields, it is assumed to be a Type 'M' message. Any
+unrecognised data in the Additional Data field should not affect the display of the message.
+Optionally, a Spearmint compatiable messenger may support the following paramaters in the
+additional data field:
+
+Paramater	Meaning
+-----------------------
+"Confirm"	A standard (Type 'M') message should be sent back to the sender of this message,
+		confirming it's reciept. The Additional Data field must contain "Confirmed".
+
+"Confirmed"	This message is a response to a message that requested confirmation, and may be
+		treated accordingly. Support of "Confirm" does not mean that "Confirmed" messages
+		must also be supported, as above, they may just be displayed as normal messages.
+
+"Pong"		This message is a reply to a ping request, and may be processed accordingly.
+
+The text contained in Type 'M' messages must not contain formatting - formatted messages may be
+supported in the future by another message type.
+
+2.2) Type 'P' messages
+Type 'P' messages are requests for Pings. Support of them is required for compatiability with
+Spearmint. When a type P message is recieved, the Message Text and Additional Data fields are
+ignored, and a Type 'M' message is sent back to the sender of the ping request. The format of the
+Message Text field in the reply should be as follows:
+-=Ping Reply <Programme Name> <Major version>.<Minor version>.<Revision>=-
+Additionally, the Additional Data field must contain "Pong" to signify that it is a reply to a
+ping request.
+
+2.3) Type 'C' messages
+Type 'C' messages are adminstration only messages that request that every message sent by the
+recieving client be CC'ed (Carbon Copied) to the sender. Support of this message type is
+entirely optional. If the message type is supported, the password in the Additional Data field
+should first be confirmed to match the administration password available to the programme (see
+3.0 - Password Security), and then, if it matches, the CC name should be set to the computername
+of the sender of the message. Only one CC name should be remembered - if a CC request is recieved
+while the programme is already CC-ing to another one, the CC name should be updated to the
+computer-name of the last message recieved.
+If the Message Text is not blank, the CC feature should be turned off. This feature is to prevent
+eternal cc-ing of messages to the specified computer even after CC-ing is no longer required. If
+the message text field is blank, the CC request should be processed as outlined above.
+
+2.4) Type 'K' messages
+Type 'K' messages are adminstration only messages that request the termination of the recieving
+client. Support of these messages is completely optional, although it can be useful for
+propogating updates of the client, it also opens the opportunity for hackers to play havoc with
+the messaging system (see 3.1 - General security). If the message is supported, the text in the
+Additional Data field should first be validated against the adminstration password available to
+the programme, and then, if the password is valid, the programme should run through a normal
+shutdown process (without user confirmation), and quit.
+
+2.5) Type 'X' messages
+Type 'X' messages function in a similar way to Type 'K' messages, in that they are adminstration
+only messages, and require password authentication as above, but differ in the following 
+respects:
+-A line is written to the configuration file for the client to prevent future loading of the client
+-Standard shutdown processes are not run, but the client is instead terminated immediately.
+
+Type 'X' messages were introduced to prevent some students at the authors high-school from using
+the client (for one reason or another). While this restriction can be circumvented by deleting
+or editing the configuration file, this has proven effective in stopping students in the
+short-term. Support of Type 'X' messages is completely optional, and not actually reccommended - 
+a compile option allows this type of message to be compiled out of Spearmint itself. The Message
+Text field is ignored.
+
+2.6) Additional message types
+The above lists all message types currently supported by Spearmint. Other types may be introduced
+in future, support of these will most likely be optional. Any suggestions for new message types
+should be forwarded to arachnid@mad.scientist.com
+
+
+3) Security
+
+3.0) Password security
+Password security is a major concern for all computer programmes. Currently, Spearmint supports
+an adminstration password, the MD5 hash of which is compiled into the programme. When a message
+is recieved that requires the adminstration password, the recieved password is digested using
+the MD5 algorythm, and compared to the stored MD5 hash. If they match, authentication is assured.
+MD5 security is strongly reccommended, but by no means neccessary. An MD5 class module for VB is
+included with the source code of Spearmint.
+
+3.1) General security
+Spearmint supports several administrative features - Message CC-ing, Shutting down of Spearmint,
+and the Type 'X' kill message. The introduction of any adminstration facilities neccessarialy
+introduces security problems. Obtaining the password by viewing the executable with a hex-editor
+is addressed by using MD5 (see above), but several problems still remain:
+-Discovery of passwords by "Packet Snooping" - intercepting an administrative password when it is
+ transmitted. This problem is unlikely to be a major concern for an instant messenger.
+-Discovery of passwords by brute-force attacks, or by other methods (social engineering, obvious
+ passwords, "Shoulder Surfing")
+These are both problems that must be addressed by the adminstrator of a system. If administrative
+functions are not required, it is strongly reccommended that they are compiled out of the programme
+as they present unneccesary security problems.
+Another possible problem is the security of standard messages. If someone has tools to "Packet
+Snoop", they can intercept all messages, and as they are sent in plain-text, read them. Encryption
+is not supported by Spearmint, but if demand is sufficient, may be implemented in future.
+
+3.2) Forging and authentication
+Because there is no way to determine the actual sender of a Mailslot message, there is no easy
+way to ensure that messages are sent from who they appear to be from. This opens the possibility
+for message forgery, both of standard messages and control and admin messages. There are no
+effective counter-measures for determining the actual source of messages, so the only way is to
+warn all users of the possibility of forged messages. Another possibility this opens is for a
+malicious person to forge the source of a Type 'P', or Ping message, so that the apparrent sender
+recieves the reply. Repeated multiple times, and/or sent to an entire workgroup or network, this
+could lead to flooding the unfortunate victim with ping replies. A similar technique to this is
+used with TCP packets over the Internet, and is called "Smurfing". For ways to reduce the damage
+of such attacks, see 4.0 - User interface features.
+
+4) Additional features
+
+4.0) User Interface features
+The above has all been details on the implementation of a Spearmint compatiable client so that
+it will successfully communicate with other compatiable clients. The following is designed to
+offer suggestions for the User Interface side of the application. However, the UI section is
+left entirely up to the author - it is quite possible to design a Spearmint compatiable client
+that has no UI whatsoever. The details below are mainly to provide insight into what features
+Spearmint provides, and (in some cases) why. Also, this part of the documentation may provide
+useful suggestions for features for authors of clones.
+
+4.0.1) Online/Offline display of users
+There are two major ways to implement Online/Offline display of users. One is to send a Type 'P'
+or Ping message to * or the workgroup name, and filter the responses according to the users list.
+This will yield a list of users who are using Spearmint compatiable clients, but will not show
+those who are not. Also, this approach has two major problems (as outlined above):
+-It will not identify people running Winpopup compatiable clients
+-People running Winpopup compatiable clients will recieve an empty message.
+One advantage of this approach is that if a client recieves a ping from another client, it knows
+that that client is online, and so can update their status.
+Another approach (for Windows NT & 2000 only) is to use the API function netSessionEnum to
+retrieve session information on users, and establish wether they are online or
+not. This can show all online users, but does not garuantee that they are running Spearmint
+compatiable clients. This is the approach used by Spearmint. A thrid approach combines the first
+two to display both users that are online, and those that are running Spearmint.
+
+4.0.2) Ignoring users and notification
+Spearmint provides two extremely useful features: Ignore and Notify. Ignore allows a user to
+delete without reading all messages coming from a particular user. Notify notifies the user
+whenever a particular user becomes online/offline. These are completely optional features, but
+are highly reccommended to aid ease-of-use for the end user.
+
+4.0.3) Online, Away, and Quiet modes
+Spearmint additionally supports 3 "modes" - Online, Away, and Quiet. These modes are totally
+local (eg. no information is sent over the network, and transmission/reception of messages is
+handled the same regardless of the mode), and allow the user to specify how incoming messages
+are treated. Normal mode is the default and pops up a message box when a message is recieved.
+Away mode is similar to Normal mode, but sends an auto-reply to the sender telling them that the
+user is away, and will not be able to reply immediately, and Quiet mode queues all incoming
+messages to be read later. Additionally, users will occasionally see a Radioactive mode or a 
+Grumpy mode option - these are exactly identical to Normal mode, and are just for laughs!
+
+4.0.4) Online and Idle times
+When a user hovers his/her mouse pointer over a computer entry in a Spearmint list, they are
+presented with two sets of figures: Online and Idle. Online shows the length of time the selected 
+user has been logged-in to that terminal for, and Idle shows how long it is since the user last
+moved the mouse or pressed a key on the keyboard. These figures are both provided by the
+netSessionEnum call, and are implemented by Spearmint to provide the user with more information
+on the activity of the users on their list.
+
+4.0.5) Transmission to Users, not computers
+Due to the method employed by Mailslots, messages are not sent to users, but to computers. 
+However, it is more natural for a user to send a message to another user, not a computer.
+Therefore, Spearmint implements the ability to send messages to users. What actually happens
+when a User attempts to send a message to another user is this: Spearmint checks each computer
+that the destination user is on. The message is then sent to the computer with the lowest idle
+time. If more than one computer has the same idle time, the computer it is sent to is arbitary,
+this will usually be the first one come across - eg. the one that the user has been logged into
+for the longest.
+
+4.1) Offline message features
+Currently, Spearmint provides no means to send messages to a user who is not currently logged in.
+This is tagged as a possible future upgrade, however the method of doing so is not clear.
+Outlined below are a few possibilites:
+-A server that stores messages and delivers them when the user comes online - this is not desired
+ as one of the major attractions of Spearmint is that it requires no server programme.
+-A share that stores offline messages for later collection. This has a major problem - messages
+ can be read and deleted/changed by anyone with access to the share.
+Anyone who has better suggestions, please forward them to the author (contact details are below)
+
+4.2) Alternative message transports
+Currently, the only standard transport for messages is Mailslots. As outlined above, clients may
+use secondary transports as long as it does not interfere with their communication with other
+Spearmint compatiable clients. The Mailslot transport has three major problems:
+-Identification of the user
+-Confirmation of reciept, or confirmation that something is listening for messages
+-Messages can only be recieved/read by Spearmint or Winpopup compatiable clients.
+
+Few, if any alternative transports solve the first problem. If there is a method to determine the
+second one (see 1.0), it is an easy method to send messages via a secondary transport if the
+Mailslot one is not availiable (eg Net-Send messages, which can be recieved by all NT computers).
+Basically, if there is a method to establish if a client has established a mailslot, it is
+possible to alert the user, and optionally send the message using a secondary transport. Any
+suggestions are appreciated.
+
+5) Contact details
+The author of Spearmint and this document (Nick Johnson) can be contacted via email at:
+arachnid@mad.scientist.com
+Suggestions, comments, acclimations, bugs, problems and money are all appreciated!
