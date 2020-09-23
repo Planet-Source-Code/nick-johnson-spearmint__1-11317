@@ -1,0 +1,15 @@
+frmMain = -25, 7, 532, 244, Z, -31, 6, 526, 359, C
+MailslotClient = 11, 107, 475, 388, C
+MailslotServer = 46, 85, 510, 366, C
+modGlobal = 0, 0, 375, 346, C
+UserMonitor = 34, 112, 498, 393, C, 44, 44, 419, 390, C
+Computer = 22, 22, 478, 295, C
+Computers = -8, 121, 448, 394, C
+User = 22, 22, 478, 295, C
+Users = 17, 133, 481, 415, C
+frmAdd = 132, 132, 507, 478, C, 66, 66, 441, 412, C
+frmSysTray = 88, 88, 544, 361, C, 88, 88, 455, 426, C
+frmMessage = 44, 44, 411, 382, C, 22, 22, 389, 360, C
+Message = 66, 66, 433, 404, C
+frmOnlineUsers = 0, 0, 367, 338, C, 154, 154, 521, 492, C
+MD5 = 66, 66, 441, 412, C
